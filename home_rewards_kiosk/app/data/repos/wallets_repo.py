@@ -1,9 +1,11 @@
+from typing import Optional
+
 from sqlalchemy.orm import Session
 
 from app.data.models import Wallet
 
 
-def get_wallet(session: Session, child_id: int) -> Wallet | None:
+def get_wallet(session: Session, child_id: int) -> Optional[Wallet]:
     return session.query(Wallet).filter(Wallet.child_id == child_id).one_or_none()
 
 

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy.orm import Session
 
 from app.data.models import Transaction
@@ -10,7 +12,7 @@ def create_transaction(session: Session, transaction: Transaction) -> Transactio
     return transaction
 
 
-def list_transactions(session: Session, child_id: int | None = None) -> list[Transaction]:
+def list_transactions(session: Session, child_id: Optional[int] = None) -> list[Transaction]:
     query = session.query(Transaction)
     if child_id is not None:
         query = query.filter(Transaction.child_id == child_id)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from typing import Optional
 
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -25,7 +26,7 @@ class Goal(Base):
     __tablename__ = "goals"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    child_id: Mapped[int | None] = mapped_column(ForeignKey("children.id"), nullable=True)
+    child_id: Mapped[Optional[int]] = mapped_column(ForeignKey("children.id"), nullable=True)
     category: Mapped[str] = mapped_column(String(50), nullable=False)
     title: Mapped[str] = mapped_column(String(120), nullable=False)
     reward_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -33,7 +34,7 @@ class Goal(Base):
     proof_required: Mapped[bool] = mapped_column(Boolean, default=False)
     auto_approve: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    child: Mapped[Child | None] = relationship("Child", back_populates="goals")
+    child: Mapped[Optional[Child]] = relationship("Child", back_populates="goals")
     instances: Mapped[list[GoalInstance]] = relationship("GoalInstance", back_populates="goal")
 
 
@@ -45,8 +46,8 @@ class GoalInstance(Base):
     child_id: Mapped[int] = mapped_column(ForeignKey("children.id"), nullable=False)
     date: Mapped[date] = mapped_column(Date, default=date.today, nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="open", nullable=False)
-    claimed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    approved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    claimed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     goal: Mapped[Goal] = relationship("Goal", back_populates="instances")
 

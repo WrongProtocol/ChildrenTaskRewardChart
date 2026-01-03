@@ -1,4 +1,6 @@
 from datetime import date, datetime
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -13,7 +15,7 @@ class ChildOut(BaseModel):
 
 class GoalOut(BaseModel):
     id: int
-    child_id: int | None
+    child_id: Optional[int]
     category: str
     title: str
     reward_minutes: int
@@ -31,8 +33,8 @@ class GoalInstanceOut(BaseModel):
     child_id: int
     date: date
     status: str
-    claimed_at: datetime | None
-    approved_at: datetime | None
+    claimed_at: Optional[datetime]
+    approved_at: Optional[datetime]
 
     class Config:
         from_attributes = True
@@ -62,7 +64,7 @@ class KioskStateOut(BaseModel):
     goals: list[GoalOut]
     instances: list[GoalInstanceOut]
     wallets: list[WalletOut]
-    settings: SettingsOut | None
+    settings: Optional[SettingsOut]
 
 
 class ClaimRequest(BaseModel):
@@ -87,7 +89,7 @@ class ApprovalRequest(BaseModel):
 
 
 class GoalCreateRequest(BaseModel):
-    child_id: int | None = None
+    child_id: Optional[int] = None
     category: str
     title: str
     reward_minutes: int
@@ -97,15 +99,15 @@ class GoalCreateRequest(BaseModel):
 
 
 class GoalUpdateRequest(BaseModel):
-    category: str | None = None
-    title: str | None = None
-    reward_minutes: int | None = None
-    repeat_rule: str | None = None
-    proof_required: bool | None = None
-    auto_approve: bool | None = None
+    category: Optional[str] = None
+    title: Optional[str] = None
+    reward_minutes: Optional[int] = None
+    repeat_rule: Optional[str] = None
+    proof_required: Optional[bool] = None
+    auto_approve: Optional[bool] = None
 
 
 class SettingsUpdateRequest(BaseModel):
-    daily_minute_cap: int | None = None
-    exchange_rate_cents: int | None = None
-    pin: str | None = None
+    daily_minute_cap: Optional[int] = None
+    exchange_rate_cents: Optional[int] = None
+    pin: Optional[str] = None
