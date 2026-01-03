@@ -186,3 +186,9 @@ body {
   background: #1e293b;
   border-color: #64748b;
 }
+
+.category-tile.active {
+  background: #334155;
+  border-color: #38bdf8;
+  color: #f8fafc;
+}
