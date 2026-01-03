@@ -2,6 +2,7 @@ const dashboard = document.getElementById("dashboard");
 const dateLabel = document.getElementById("date");
 const capLabel = document.getElementById("daily-cap");
 const rateLabel = document.getElementById("exchange-rate");
+const lockButton = document.querySelector(".lock-button");
 const selectedCategories = new Map();
 
 const formatDate = () => {
@@ -169,3 +170,19 @@ const loadState = async () => {
 };
 
 loadState();
+
+if (lockButton) {
+  lockButton.addEventListener("click", async () => {
+    const pin = window.prompt("Enter parent PIN");
+    if (!pin) {
+      return;
+    }
+    try {
+      await postJson("/parent/unlock", { pin });
+      window.alert("Parent controls unlocked.");
+    } catch (error) {
+      window.alert("Invalid PIN. Please try again.");
+      console.error(error);
+    }
+  });
+}
