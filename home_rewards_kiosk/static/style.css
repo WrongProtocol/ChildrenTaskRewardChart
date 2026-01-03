@@ -152,4 +152,37 @@ body {
   padding: 12px;
   border-radius: 12px;
   font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.actions button:hover {
+  background: #1d4ed8;
+}
+
+.actions button:active {
+  transform: scale(0.98);
+}
+
+.lock-button {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.lock-button:hover {
+  background: #dc2626;
+}
+
+.lock-button:active {
+  transform: scale(0.98);
+}
+
+.category-tile {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.category-tile:hover {
+  background: #1e293b;
+  border-color: #64748b;
 }
