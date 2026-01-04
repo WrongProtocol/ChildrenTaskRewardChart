@@ -65,6 +65,10 @@ async function loadState() {
       return;
     }
     appState = await response.json();
+    console.log("Loaded appState:", appState);
+    if (appState.children && appState.children.length > 0) {
+      console.log("First child from appState:", appState.children[0]);
+    }
     renderState();
   } catch (error) {
     board.innerHTML = "<div class=\"empty-message\">Unable to load tasks. Check the server connection.</div>";
@@ -103,6 +107,9 @@ function renderState() {
     const name = document.createElement("div");
     name.className = "child-name";
     name.textContent = child.name;
+    if (child.color) {
+      name.style.color = child.color;
+    }
     header.appendChild(name);
 
     // Progress bar showing % of tasks approved
@@ -904,7 +911,12 @@ async function loadSettings() {
   section.appendChild(form);
 
   const maxChildren = 5;
+  // Get fresh children data from appState (which should be updated from /api/state)
   const children = appState?.children || [];
+  console.log("Children data in loadSettings:", children);
+  if (children.length > 0) {
+    console.log("First child color:", children[0].color, "Type:", typeof children[0].color);
+  }
   const childManager = document.createElement("div");
   childManager.className = "child-management";
 
@@ -927,6 +939,25 @@ async function loadSettings() {
     input.value = child.name;
     input.setAttribute("aria-label", `Child name for ${child.name}`);
 
+    const colorInput = document.createElement("input");
+    colorInput.type = "color";
+    // Log the color value for debugging
+    console.log(`Child ${child.id} (${child.name}) color from DB:`, child.color, "Type:", typeof child.color);
+    // Ensure we have a valid hex color value (color input requires valid hex)
+    let colorValue = "#000000"; // Default to black
+    if (child.color && typeof child.color === "string") {
+      // Check if it's a valid hex color (with or without #)
+      if (child.color.startsWith("#") && child.color.length === 7) {
+        colorValue = child.color;
+      } else if (!child.color.startsWith("#") && child.color.length === 6) {
+        colorValue = "#" + child.color;
+      }
+    }
+    colorInput.value = colorValue;
+    console.log(`Setting color picker to: ${colorValue}`);
+    colorInput.setAttribute("aria-label", `Color for ${child.name}`);
+    colorInput.className = "color-picker";
+
     const actions = document.createElement("div");
     actions.className = "child-actions";
 
@@ -940,17 +971,21 @@ async function loadSettings() {
         showToast("Child name is required");
         return;
       }
+      const payload = { name, color: colorInput.value };
+      console.log("Saving child with payload:", payload);
       const response = await fetchWithAuth(`/api/parent/children/${child.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify(payload),
       });
+      console.log("Save response status:", response.status);
       if (!response.ok) {
         showToast("Unable to update child");
         return;
       }
       await loadState();
       loadSettings();
+      showToast("Child saved successfully");
     });
 
     const deleteButton = document.createElement("button");
@@ -977,6 +1012,7 @@ async function loadSettings() {
     actions.appendChild(saveButton);
     actions.appendChild(deleteButton);
     row.appendChild(input);
+    row.appendChild(colorInput);
     row.appendChild(actions);
     childList.appendChild(row);
   });

@@ -42,12 +42,14 @@ class ChildCreate(BaseModel):
 class ChildUpdate(BaseModel):
     name: Optional[str] = None
     display_order: Optional[int] = None
+    color: Optional[str] = None  # Hex color code (e.g., #FF5733)
 
 
 class ChildResponse(BaseModel):
     id: int
     name: str
     display_order: int
+    color: Optional[str] = None
 
 
 class ChildListResponse(BaseModel):

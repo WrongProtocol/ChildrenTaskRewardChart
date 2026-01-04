@@ -428,6 +428,12 @@ html, body {
   font-size: 12px;
 }
 
+.child-row input.color-picker {
+  flex: 0 0 50px;
+  padding: 2px;
+  cursor: pointer;
+}
+
 .child-actions {
   display: flex;
   gap: 6px;

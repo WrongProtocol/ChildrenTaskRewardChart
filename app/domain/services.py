@@ -104,95 +104,6 @@ def ensure_today_initialized(session: Session) -> None:
     session.commit()
 
 
-def build_state(session: Session) -> Dict:
-    """
-    Build complete kiosk state for display.
-    Compiles all children and their tasks, organized by category with progress tracking.
-    
-    Returns:
-        Dict with:
-        - date: Today's date
-        - children: Array of child states with tasks organized by category
-        - daily_reward_text: Text to show when all tasks complete
-    """
-    ensure_today_initialized(session)
-    current_date = today_str()
-    settings = get_settings(session)
-    
-    # Get all children in display order
-    children = session.execute(select(Child).order_by(Child.display_order)).scalars().all()
-    
-    # Get all today's tasks
-    tasks = (
-        session.execute(select(DailyTaskInstance).where(DailyTaskInstance.date == current_date))
-        .scalars()
-        .all()
-    )
-
-    # Organize tasks by child ID for efficient lookup
-    tasks_by_child: Dict[int, List[DailyTaskInstance]] = {}
-    for task in tasks:
-        tasks_by_child.setdefault(task.child_id, []).append(task)
-
-    # Build state for each child
-    child_states = []
-    for child in children:
-        # Get and sort this child's tasks
-        child_tasks = sorted(tasks_by_child.get(child.id, []), key=lambda t: (t.category, t.sort_order))
-        
-        # Initialize category buckets and progress tracking
-        categories = {category: [] for category in CATEGORIES}
-        category_progress = {category: {"approved": 0, "total": 0} for category in CATEGORIES}
-        approved_count = 0
-        required_total = 0
-        required_approved = 0
-        
-        # Process each task
-        for task in child_tasks:
-            categories[task.category].append(
-                {
-                    "id": task.id,
-                    "title": task.title,
-                    "required": task.required,
-                    "reward_text": task.reward_text,
-                    "state": task.state,
-                    "category": task.category,
-                    "sort_order": task.sort_order,
-                }
-            )
-            category_progress[task.category]["total"] += 1
-            if task.state == "APPROVED":
-                approved_count += 1
-                category_progress[task.category]["approved"] += 1
-            if task.required:
-                required_total += 1
-                if task.state == "APPROVED":
-                    required_approved += 1
-
-        # Calculate progress metrics
-        total_count = len(child_tasks)
-        percent_complete = int((approved_count / total_count) * 100) if total_count else 0
-        unlocked = required_total == required_approved  # All required tasks approved
-        pending_count = len([t for t in child_tasks if t.state == "PENDING"])
-        
-        child_states.append(
-            {
-                "id": child.id,
-                "name": child.name,
-                "display_order": child.display_order,
-                "percent_complete": percent_complete,
-                "unlocked": unlocked,  # True if child earned daily reward
-                "pending_count": pending_count,
-                "categories": categories,
-                "category_progress": category_progress,
-            }
-        )
-
-    return {
-        "date": current_date,
-        "children": child_states,
-        "daily_reward_text": settings.daily_reward_text,
-    }
 
 
 # ============================================
@@ -285,11 +196,21 @@ def update_child(session: Session, child_id: int, data: Dict) -> Tuple[Optional[
         for index, item in enumerate(ordered):
             item.display_order = index
 
+    if "color" in data and data["color"] is not None:
+        color_value = data["color"]
+        # Validate hex color format (e.g., #FF5733)
+        if isinstance(color_value, str) and len(color_value) == 7 and color_value.startswith("#"):
+            child.color = color_value
+        elif isinstance(color_value, str) and color_value == "":
+            child.color = None
+        # else: invalid color format, skip setting it
+
     session.commit()
     return {
         "id": child.id,
         "name": child.name,
         "display_order": child.display_order,
+        "color": child.color,
     }, None
 
 
@@ -785,6 +706,7 @@ def build_state(session: Session) -> Dict:
                 "id": child.id,
                 "name": child.name,
                 "display_order": child.display_order,
+                "color": child.color,
                 "percent_complete": percent_complete,
                 "unlocked": unlocked,
                 "pending_count": pending_count,

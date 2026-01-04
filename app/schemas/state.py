@@ -22,6 +22,7 @@ class ChildState(BaseModel):
     id: int
     name: str
     display_order: int
+    color: Optional[str] = None
     percent_complete: int
     unlocked: bool
     pending_count: int

@@ -16,6 +16,7 @@ class Child(Base):
         id: Unique identifier
         name: Child's name (displayed on kiosk)
         display_order: Order in which child appears on the main display
+        color: Hex color code for the child's name display (e.g., #FF5733)
         tasks: Relationship to their daily task instances
     """
     __tablename__ = "children"
@@ -23,6 +24,7 @@ class Child(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     display_order = Column(Integer, nullable=False)
+    color = Column(String, nullable=True, default=None)  # Hex color code (e.g., #FF5733)
 
     tasks = relationship("DailyTaskInstance", back_populates="child")
 
