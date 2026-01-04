@@ -194,6 +194,7 @@ function showParentPanel() {
   document.getElementById("parentPanel").classList.remove("hidden");
   loadApprovals();
   loadTodayTasks();
+  loadCompletedTasks();
   loadTemplates();
   loadSettings();
 }
@@ -274,6 +275,63 @@ async function handleReject(taskId) {
   await fetchWithAuth(`/api/parent/tasks/${taskId}/reject`, { method: "POST" });
   await loadState();
   loadApprovals();
+}
+
+async function loadCompletedTasks() {
+  const section = document.getElementById("tab-completed");
+  section.innerHTML = "";
+  const response = await fetchWithAuth("/api/parent/completed");
+  if (!response.ok) {
+    section.textContent = "Unable to load completed tasks.";
+    return;
+  }
+  const data = await response.json();
+  const completed = data.completed;
+  if (completed.length === 0) {
+    section.textContent = "No completed tasks.";
+    return;
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "panel-grid";
+  const grouped = {};
+  completed.forEach((task) => {
+    grouped[task.child_name] = grouped[task.child_name] || [];
+    grouped[task.child_name].push(task);
+  });
+
+  Object.entries(grouped).forEach(([childName, tasks]) => {
+    const card = document.createElement("div");
+    card.className = "panel-card";
+    const title = document.createElement("h3");
+    title.textContent = childName;
+    card.appendChild(title);
+    tasks.forEach((task) => {
+      const row = document.createElement("div");
+      row.className = "panel-task";
+      const label = document.createElement("span");
+      label.textContent = `${CATEGORY_LABELS[task.category]} - ${task.title}`;
+      const actions = document.createElement("div");
+      actions.className = "action-buttons";
+      const revoke = document.createElement("button");
+      revoke.className = "revoke";
+      revoke.textContent = "Uncheck";
+      revoke.addEventListener("click", () => handleRevoke(task.id));
+      actions.appendChild(revoke);
+      row.appendChild(label);
+      row.appendChild(actions);
+      card.appendChild(row);
+    });
+    grid.appendChild(card);
+  });
+
+  section.appendChild(grid);
+}
+
+async function handleRevoke(taskId) {
+  await fetchWithAuth(`/api/parent/tasks/${taskId}/revoke`, { method: "POST" });
+  await loadState();
+  loadCompletedTasks();
 }
 
 function buildTodayForm() {

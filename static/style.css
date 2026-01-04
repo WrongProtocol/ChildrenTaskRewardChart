@@ -360,6 +360,11 @@ html, body {
   color: #fff;
 }
 
+.revoke {
+  background: #f59e0b;
+  color: #111827;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
