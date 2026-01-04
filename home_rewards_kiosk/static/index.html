@@ -9,7 +9,7 @@
   <body>
     <div class="app">
       <header class="top-bar">
-        <div>
+        <div class="brand">
           <h1>Home Rewards Kiosk</h1>
           <p id="date"></p>
         </div>
@@ -23,11 +23,14 @@
             <strong id="exchange-rate">--</strong>
           </div>
         </div>
-        <button class="lock-button">Parent 🔒</button>
+        <button class="lock-button" id="parent-button">Parent 🔒</button>
       </header>
 
       <main class="dashboard" id="dashboard"></main>
     </div>
+
+    <div class="modal hidden" id="modal-root" aria-hidden="true"></div>
+
     <script src="/app.js"></script>
   </body>
 </html>
