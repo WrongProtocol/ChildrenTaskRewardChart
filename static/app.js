@@ -85,6 +85,13 @@ function renderState() {
 
   const board = document.getElementById("board");
   board.innerHTML = "";
+  const childCount = appState.children.length;
+  board.style.setProperty("--child-count", Math.max(childCount, 1));
+  if (childCount >= 4 && childCount <= 5) {
+    board.dataset.columns = String(childCount);
+  } else {
+    delete board.dataset.columns;
+  }
 
   if (!appState.children.length) {
     board.innerHTML = "<div class=\"empty-message\">No children found. Check the database seed data.</div>";

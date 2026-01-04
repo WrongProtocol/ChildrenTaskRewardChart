@@ -49,9 +49,10 @@ html, body {
 
 .board {
   flex: 1;
-  display: flex;
+  display: grid;
   gap: 16px;
   padding: 16px 20px 20px;
+  grid-template-columns: repeat(var(--child-count, 1), minmax(0, 1fr));
 }
 
 .empty-message {
@@ -61,7 +62,6 @@ html, body {
 }
 
 .child-card {
-  flex: 1;
   background: #fff;
   border-radius: 12px;
   padding: 16px;
@@ -123,6 +123,66 @@ html, body {
   padding: 6px 10px;
   border-radius: 8px;
   color: #0e7490;
+}
+
+.board[data-columns="4"],
+.board[data-columns="5"] {
+  gap: 12px;
+  padding: 12px 16px 16px;
+}
+
+.board[data-columns="4"] .child-card,
+.board[data-columns="5"] .child-card {
+  padding: 12px;
+  gap: 10px;
+}
+
+.board[data-columns="4"] .child-name,
+.board[data-columns="5"] .child-name {
+  font-size: 18px;
+}
+
+.board[data-columns="4"] .progress-percent,
+.board[data-columns="5"] .progress-percent {
+  font-size: 12px;
+}
+
+.board[data-columns="4"] .unlock-banner,
+.board[data-columns="5"] .unlock-banner {
+  font-size: 13px;
+  padding: 5px 8px;
+}
+
+.board[data-columns="4"] .reward-text,
+.board[data-columns="5"] .reward-text {
+  font-size: 12px;
+  padding: 5px 8px;
+}
+
+.board[data-columns="4"] .category-title,
+.board[data-columns="5"] .category-title {
+  font-size: 12px;
+}
+
+.board[data-columns="4"] .task,
+.board[data-columns="5"] .task {
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.board[data-columns="4"] .task-check,
+.board[data-columns="5"] .task-check {
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+}
+
+.board[data-columns="5"] .child-name {
+  font-size: 17px;
+}
+
+.board[data-columns="5"] .task {
+  font-size: 12px;
 }
 
 .category {
