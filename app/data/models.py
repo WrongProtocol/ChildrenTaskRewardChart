@@ -1,3 +1,7 @@
+"""
+SQLAlchemy ORM models defining the database schema.
+Four main tables: children, task templates, daily tasks, and settings.
+"""
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
@@ -5,6 +9,15 @@ from app.data.database import Base
 
 
 class Child(Base):
+    """
+    Represents a child in the reward system.
+    
+    Attributes:
+        id: Unique identifier
+        name: Child's name (displayed on kiosk)
+        display_order: Order in which child appears on the main display
+        tasks: Relationship to their daily task instances
+    """
     __tablename__ = "children"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -15,30 +28,63 @@ class Child(Base):
 
 
 class TaskTemplateItem(Base):
+    """
+    Recurring task template that generates daily task instances.
+    Defines which tasks appear on weekdays vs weekends.
+    
+    Attributes:
+        id: Unique identifier
+        template_type: 'WEEKDAY' or 'WEEKEND'
+        category: Task category (SCHOOLWORK, HYGIENE, HELPFUL)
+        title: Task description
+        required: True if completion is required, False if bonus
+        reward_text: Custom reward text (for bonus tasks)
+        sort_order: Display order within category
+        child_id: If null, applies to all children; if set, applies only to that child
+    """
     __tablename__ = "task_template_items"
 
     id = Column(Integer, primary_key=True, index=True)
-    template_type = Column(String, nullable=False)
-    category = Column(String, nullable=False)
+    template_type = Column(String, nullable=False)  # WEEKDAY or WEEKEND
+    category = Column(String, nullable=False)       # SCHOOLWORK, HYGIENE, HELPFUL
     title = Column(String, nullable=False)
     required = Column(Boolean, nullable=False, default=True)
     reward_text = Column(String, nullable=True)
     sort_order = Column(Integer, nullable=False, default=0)
-    child_id = Column(Integer, ForeignKey("children.id"), nullable=True)
+    child_id = Column(Integer, ForeignKey("children.id"), nullable=True)  # null = all children
 
 
 class DailyTaskInstance(Base):
+    """
+    Individual task instance for a specific child on a specific day.
+    Created from templates or manually added by parent.
+    
+    Attributes:
+        id: Unique identifier
+        date: Date string (YYYY-MM-DD format)
+        child_id: Foreign key to child
+        category: Task category (SCHOOLWORK, HYGIENE, HELPFUL)
+        title: Task description
+        required: True if completion is required for daily reward
+        reward_text: Custom reward text (e.g., "10 minutes gaming")
+        sort_order: Display order within category
+        state: Current state - OPEN (not claimed), PENDING (claimed by child),
+               APPROVED (approved by parent), REJECTED (parent rejected)
+        claimed_at: Timestamp when child claimed the task
+        approved_at: Timestamp when parent approved the task
+        child: Relationship to the child who owns this task
+    """
     __tablename__ = "daily_task_instances"
 
     id = Column(Integer, primary_key=True, index=True)
-    date = Column(String, nullable=False)
+    date = Column(String, nullable=False)            # YYYY-MM-DD
     child_id = Column(Integer, ForeignKey("children.id"), nullable=False)
     category = Column(String, nullable=False)
     title = Column(String, nullable=False)
     required = Column(Boolean, nullable=False, default=True)
     reward_text = Column(String, nullable=True)
     sort_order = Column(Integer, nullable=False, default=0)
-    state = Column(String, nullable=False, default="OPEN")
+    state = Column(String, nullable=False, default="OPEN")  # OPEN, PENDING, APPROVED, REJECTED
     claimed_at = Column(DateTime, nullable=True)
     approved_at = Column(DateTime, nullable=True)
 
@@ -46,9 +92,18 @@ class DailyTaskInstance(Base):
 
 
 class Settings(Base):
+    """
+    Global kiosk configuration settings.
+    
+    Attributes:
+        id: Always 1 (singleton pattern)
+        parent_pin_hash: Hashed parent PIN for authentication
+        daily_reward_text: Text shown when all required tasks are completed
+        last_reset_date: Date when today's tasks were last generated from templates
+    """
     __tablename__ = "settings"
 
     id = Column(Integer, primary_key=True, index=True)
     parent_pin_hash = Column(Text, nullable=False)
     daily_reward_text = Column(String, nullable=False)
-    last_reset_date = Column(String, nullable=True)
+    last_reset_date = Column(String, nullable=True)  # Date of last daily reset
