@@ -212,6 +212,7 @@ def list_children(session: Session) -> List[Dict]:
 
 
 def create_child(session: Session, data: Dict) -> Tuple[Optional[Dict], Optional[str]]:
+    ensure_today_initialized(session)
     children = session.execute(select(Child).order_by(Child.display_order)).scalars().all()
     if len(children) >= MAX_CHILDREN:
         return None, f"Maximum of {MAX_CHILDREN} children allowed"
@@ -228,6 +229,35 @@ def create_child(session: Session, data: Dict) -> Tuple[Optional[Dict], Optional
 
     new_child = Child(name=data["name"], display_order=requested_order)
     session.add(new_child)
+    session.commit()
+
+    current_date = today_str()
+    template_type = "WEEKEND" if datetime.date.today().weekday() >= 5 else "WEEKDAY"
+    template_items = (
+        session.execute(
+            select(TaskTemplateItem)
+            .where(TaskTemplateItem.template_type == template_type)
+            .order_by(TaskTemplateItem.sort_order)
+        )
+        .scalars()
+        .all()
+    )
+
+    for item in template_items:
+        if item.child_id is not None and item.child_id != new_child.id:
+            continue
+        session.add(
+            DailyTaskInstance(
+                date=current_date,
+                child_id=new_child.id,
+                category=item.category,
+                title=item.title,
+                required=item.required,
+                reward_text=item.reward_text,
+                sort_order=item.sort_order,
+                state="OPEN",
+            )
+        )
     session.commit()
     return {
         "id": new_child.id,
