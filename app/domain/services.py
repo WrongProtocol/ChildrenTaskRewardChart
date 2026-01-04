@@ -185,6 +185,17 @@ def reject_task(session: Session, task_id: int) -> Optional[str]:
     return None
 
 
+def revoke_task(session: Session, task_id: int) -> Optional[str]:
+    task = session.get(DailyTaskInstance, task_id)
+    if not task:
+        return "Task not found"
+    task.state = "OPEN"
+    task.claimed_at = None
+    task.approved_at = None
+    session.commit()
+    return None
+
+
 def list_pending_tasks(session: Session) -> List[Dict]:
     current_date = today_str()
     pending_tasks = (
@@ -198,6 +209,31 @@ def list_pending_tasks(session: Session) -> List[Dict]:
     )
     result = []
     for task, child in pending_tasks:
+        result.append(
+            {
+                "id": task.id,
+                "child_id": child.id,
+                "child_name": child.name,
+                "title": task.title,
+                "category": task.category,
+            }
+        )
+    return result
+
+
+def list_completed_tasks(session: Session) -> List[Dict]:
+    current_date = today_str()
+    completed_tasks = (
+        session.execute(
+            select(DailyTaskInstance, Child)
+            .join(Child, DailyTaskInstance.child_id == Child.id)
+            .where(DailyTaskInstance.date == current_date, DailyTaskInstance.state == "APPROVED")
+            .order_by(Child.display_order, DailyTaskInstance.category, DailyTaskInstance.sort_order)
+        )
+        .all()
+    )
+    result = []
+    for task, child in completed_tasks:
         result.append(
             {
                 "id": task.id,

@@ -42,9 +42,22 @@ def reject_task(task_id: int, db: Session = Depends(get_db), _: None = Depends(r
     return {"status": "ok"}
 
 
+@router.post("/api/parent/tasks/{task_id}/revoke")
+def revoke_task(task_id: int, db: Session = Depends(get_db), _: None = Depends(require_token)):
+    error = services.revoke_task(db, task_id)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"status": "ok"}
+
+
 @router.get("/api/parent/pending")
 def list_pending(db: Session = Depends(get_db), _: None = Depends(require_token)):
     return {"pending": services.list_pending_tasks(db)}
+
+
+@router.get("/api/parent/completed")
+def list_completed(db: Session = Depends(get_db), _: None = Depends(require_token)):
+    return {"completed": services.list_completed_tasks(db)}
 
 
 @router.post("/api/parent/today/tasks")
