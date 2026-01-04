@@ -958,6 +958,11 @@ async function loadSettings() {
     deleteButton.className = "danger";
     deleteButton.textContent = "Delete";
     deleteButton.addEventListener("click", async () => {
+      // Confirm deletion before proceeding
+      if (!confirm(`Are you sure you want to delete ${child.name}? This action cannot be undone.`)) {
+        return;
+      }
+      
       const response = await fetchWithAuth(`/api/parent/children/${child.id}`, {
         method: "DELETE",
       });
