@@ -8,7 +8,17 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.domain import services
-from app.schemas.parent import PinRequest, SettingsUpdate, TaskCreate, TaskUpdate, TokenResponse
+from app.schemas.parent import (
+    ChildCreate,
+    ChildListResponse,
+    ChildResponse,
+    ChildUpdate,
+    PinRequest,
+    SettingsUpdate,
+    TaskCreate,
+    TaskUpdate,
+    TokenResponse,
+)
 from app.security.pin import verify_pin, hash_pin
 from app.security.token import create_token, verify_token
 
@@ -50,6 +60,46 @@ def unlock_parent(request: PinRequest, db: Session = Depends(get_db)):
     if not verify_pin(request.pin, settings.parent_pin_hash):
         raise HTTPException(status_code=401, detail="Invalid PIN")
     return {"token": create_token()}
+
+
+# ============================================
+# CHILD MANAGEMENT ENDPOINTS
+# ============================================
+
+@router.get("/api/parent/children", response_model=ChildListResponse)
+def list_children(db: Session = Depends(get_db), _: None = Depends(require_token)):
+    """Get all children in display order."""
+    return {"children": services.list_children(db)}
+
+
+@router.post("/api/parent/children", response_model=ChildResponse)
+def create_child(request: ChildCreate, db: Session = Depends(get_db), _: None = Depends(require_token)):
+    """
+    Create a new child profile.
+    Display order is optional; defaults to the end of the list.
+    """
+    child, error = services.create_child(db, request.model_dump())
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return child
+
+
+@router.put("/api/parent/children/{child_id}", response_model=ChildResponse)
+def update_child(child_id: int, request: ChildUpdate, db: Session = Depends(get_db), _: None = Depends(require_token)):
+    """Update a child's name and/or display order."""
+    child, error = services.update_child(db, child_id, request.model_dump(exclude_unset=True))
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return child
+
+
+@router.delete("/api/parent/children/{child_id}")
+def delete_child(child_id: int, db: Session = Depends(get_db), _: None = Depends(require_token)):
+    """Delete a child and associated tasks/templates."""
+    error = services.delete_child(db, child_id)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"status": "ok"}
 
 
 # ============================================

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -32,3 +32,23 @@ class SettingsUpdate(BaseModel):
     daily_reward_text: Optional[str] = None
     old_pin: Optional[str] = None
     new_pin: Optional[str] = None
+
+
+class ChildCreate(BaseModel):
+    name: str
+    display_order: Optional[int] = None
+
+
+class ChildUpdate(BaseModel):
+    name: Optional[str] = None
+    display_order: Optional[int] = None
+
+
+class ChildResponse(BaseModel):
+    id: int
+    name: str
+    display_order: int
+
+
+class ChildListResponse(BaseModel):
+    children: List[ChildResponse]
