@@ -22,6 +22,18 @@
 
   <div id="toast" class="toast hidden"></div>
 
+  <div id="pinModal" class="pin-modal hidden">
+    <div class="pin-card">
+      <h2>Parent PIN</h2>
+      <p>Enter the parent PIN to unlock approvals and edits.</p>
+      <input id="pinInput" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" />
+      <div class="pin-actions">
+        <button id="pinCancel" class="secondary">Cancel</button>
+        <button id="pinSubmit">Unlock</button>
+      </div>
+    </div>
+  </div>
+
   <div id="parentPanel" class="parent-panel hidden">
     <div class="parent-panel-header">
       <div class="tabs">

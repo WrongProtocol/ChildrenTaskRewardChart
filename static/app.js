@@ -17,13 +17,19 @@ function showToast(message) {
 }
 
 async function loadState() {
-  const response = await fetch("/api/state");
-  if (!response.ok) {
-    showToast("Failed to load state");
-    return;
+  const board = document.getElementById("board");
+  try {
+    const response = await fetch("/api/state");
+    if (!response.ok) {
+      showToast("Failed to load state");
+      board.innerHTML = "<div class=\"empty-message\">Unable to load tasks. Is the server running?</div>";
+      return;
+    }
+    appState = await response.json();
+    renderState();
+  } catch (error) {
+    board.innerHTML = "<div class=\"empty-message\">Unable to load tasks. Check the server connection.</div>";
   }
-  appState = await response.json();
-  renderState();
 }
 
 function renderState() {
@@ -142,8 +148,26 @@ async function toggleTask(childId, task) {
 }
 
 async function parentUnlock() {
-  const pin = prompt("Enter Parent PIN");
+  openPinModal();
+}
+
+function openPinModal() {
+  const modal = document.getElementById("pinModal");
+  const input = document.getElementById("pinInput");
+  modal.classList.remove("hidden");
+  input.value = "";
+  input.focus();
+}
+
+function closePinModal() {
+  document.getElementById("pinModal").classList.add("hidden");
+}
+
+async function submitPin() {
+  const input = document.getElementById("pinInput");
+  const pin = input.value.trim();
   if (!pin) {
+    showToast("Enter a PIN");
     return;
   }
   const response = await fetch("/api/parent/unlock", {
@@ -157,6 +181,7 @@ async function parentUnlock() {
   }
   const data = await response.json();
   parentToken = data.token;
+  closePinModal();
   showParentPanel();
 }
 
@@ -561,6 +586,13 @@ function setupTabs() {
 function setupListeners() {
   document.getElementById("parentButton").addEventListener("click", parentUnlock);
   document.getElementById("closeParent").addEventListener("click", closeParentPanel);
+  document.getElementById("pinCancel").addEventListener("click", closePinModal);
+  document.getElementById("pinSubmit").addEventListener("click", submitPin);
+  document.getElementById("pinInput").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      submitPin();
+    }
+  });
   setupTabs();
 }
 

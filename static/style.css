@@ -54,6 +54,12 @@ html, body {
   padding: 16px 20px 20px;
 }
 
+.empty-message {
+  font-size: 18px;
+  color: #6b7280;
+  padding: 20px;
+}
+
 .child-card {
   flex: 1;
   background: #fff;
@@ -200,6 +206,55 @@ html, body {
   padding: 10px 18px;
   border-radius: 6px;
   font-size: 14px;
+}
+
+.pin-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.75);
+  z-index: 20;
+}
+
+.pin-card {
+  background: #ffffff;
+  color: #0f172a;
+  padding: 24px;
+  border-radius: 12px;
+  width: 320px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.3);
+  text-align: center;
+}
+
+.pin-card input {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  margin: 12px 0 16px;
+  border-radius: 8px;
+  border: 1px solid #cbd5f5;
+}
+
+.pin-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.pin-actions button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #2563eb;
+  color: #fff;
+}
+
+.pin-actions .secondary {
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 .parent-panel {
