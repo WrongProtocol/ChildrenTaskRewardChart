@@ -3,9 +3,9 @@ Core business logic for the rewards system.
 Handles state building, task management, template management, and approval workflows.
 """
 import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.data.models import Child, DailyTaskInstance, Settings, TaskTemplateItem
@@ -14,6 +14,8 @@ from app.domain.seed import seed_data
 
 # Task categories - used throughout the system
 CATEGORIES = ["SCHOOLWORK", "HYGIENE", "HELPFUL"]
+MAX_CHILDREN = 5
+MIN_CHILDREN = 1
 
 
 def today_str() -> str:
@@ -191,6 +193,95 @@ def build_state(session: Session) -> Dict:
         "children": child_states,
         "daily_reward_text": settings.daily_reward_text,
     }
+
+
+# ============================================
+# CHILD MANAGEMENT
+# ============================================
+
+def list_children(session: Session) -> List[Dict]:
+    children = session.execute(select(Child).order_by(Child.display_order)).scalars().all()
+    return [
+        {
+            "id": child.id,
+            "name": child.name,
+            "display_order": child.display_order,
+        }
+        for child in children
+    ]
+
+
+def create_child(session: Session, data: Dict) -> Tuple[Optional[Dict], Optional[str]]:
+    children = session.execute(select(Child).order_by(Child.display_order)).scalars().all()
+    if len(children) >= MAX_CHILDREN:
+        return None, f"Maximum of {MAX_CHILDREN} children allowed"
+
+    requested_order = data.get("display_order")
+    if requested_order is None:
+        requested_order = len(children)
+    if requested_order < 0 or requested_order > len(children):
+        return None, f"display_order must be between 0 and {len(children)}"
+
+    for child in children:
+        if child.display_order >= requested_order:
+            child.display_order += 1
+
+    new_child = Child(name=data["name"], display_order=requested_order)
+    session.add(new_child)
+    session.commit()
+    return {
+        "id": new_child.id,
+        "name": new_child.name,
+        "display_order": new_child.display_order,
+    }, None
+
+
+def update_child(session: Session, child_id: int, data: Dict) -> Tuple[Optional[Dict], Optional[str]]:
+    child = session.get(Child, child_id)
+    if not child:
+        return None, "Child not found"
+
+    children = session.execute(select(Child).order_by(Child.display_order)).scalars().all()
+    if "name" in data and data["name"] is not None:
+        child.name = data["name"]
+
+    if "display_order" in data and data["display_order"] is not None:
+        new_order = data["display_order"]
+        if new_order < 0 or new_order >= len(children):
+            return None, f"display_order must be between 0 and {len(children) - 1}"
+
+        ordered = [item for item in children if item.id != child.id]
+        ordered.insert(new_order, child)
+        for index, item in enumerate(ordered):
+            item.display_order = index
+
+    session.commit()
+    return {
+        "id": child.id,
+        "name": child.name,
+        "display_order": child.display_order,
+    }, None
+
+
+def delete_child(session: Session, child_id: int) -> Optional[str]:
+    child = session.get(Child, child_id)
+    if not child:
+        return "Child not found"
+
+    total_children = session.execute(select(Child)).scalars().all()
+    if len(total_children) <= MIN_CHILDREN:
+        return "At least one child must remain"
+
+    session.execute(delete(DailyTaskInstance).where(DailyTaskInstance.child_id == child_id))
+    session.execute(delete(TaskTemplateItem).where(TaskTemplateItem.child_id == child_id))
+    session.delete(child)
+
+    remaining = session.execute(select(Child).order_by(Child.display_order)).scalars().all()
+    for index, item in enumerate(remaining):
+        item.display_order = index
+
+    session.commit()
+    return None
 
 
 # ============================================
