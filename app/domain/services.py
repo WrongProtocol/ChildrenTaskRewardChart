@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.data.models import Child, DailyTaskInstance, Settings, TaskTemplateItem
 from app.security.pin import hash_pin
+from app.domain.seed import seed_data
 
 CATEGORIES = ["SCHOOLWORK", "HYGIENE", "HELPFUL"]
 
@@ -28,6 +29,7 @@ def get_settings(session: Session) -> Settings:
 
 
 def ensure_today_initialized(session: Session) -> None:
+    seed_data(session)
     settings = get_settings(session)
     current_date = today_str()
     if settings.last_reset_date == current_date:

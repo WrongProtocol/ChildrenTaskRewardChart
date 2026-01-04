@@ -39,6 +39,11 @@ function renderState() {
   const board = document.getElementById("board");
   board.innerHTML = "";
 
+  if (!appState.children.length) {
+    board.innerHTML = "<div class=\"empty-message\">No children found. Check the database seed data.</div>";
+    return;
+  }
+
   appState.children.forEach((child) => {
     const card = document.createElement("div");
     card.className = "child-card";
