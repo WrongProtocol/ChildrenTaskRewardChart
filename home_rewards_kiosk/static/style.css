@@ -167,30 +167,102 @@ button {
   align-self: flex-start;
 }
 
-.categories {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.category-tile {
+.category-section {
   background: var(--panel-alt);
-  border-radius: 14px;
-  padding: 12px 10px;
-  text-align: center;
+  border-radius: 12px;
+  padding: 12px;
   border: 1px solid var(--border);
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.category-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0;
+}
+
+.add-task-btn {
+  background: rgba(56, 189, 248, 0.2);
+  color: var(--accent);
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 16px;
-  color: var(--text);
+  font-weight: bold;
+  border: 1px solid var(--accent);
+  transition: background 0.2s ease, transform 0.1s ease;
+  padding: 0;
+}
+
+.add-task-btn:hover {
+  background: rgba(56, 189, 248, 0.4);
+}
+
+.add-task-btn:active {
+  transform: scale(0.95);
+}
+
+.tasks-in-category {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-item {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
   transition: background 0.2s ease, border 0.2s ease;
 }
 
-.category-tile.active {
+.task-item:hover {
   background: rgba(56, 189, 248, 0.2);
   border-color: var(--accent);
 }
 
-.category-tile:hover {
-  background: var(--panel-light);
+.task-name {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+  flex: 1;
+}
+
+.task-reward {
+  font-size: 12px;
+  color: var(--muted);
+  background: rgba(56, 189, 248, 0.15);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.no-tasks {
+  text-align: center;
+  padding: 10px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .actions {

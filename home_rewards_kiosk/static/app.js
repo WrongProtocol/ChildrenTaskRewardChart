@@ -178,18 +178,34 @@ const render = () => {
       </div>
       <div class="minutes">${wallet.minutes_balance} min</div>
       <div class="pending">${pendingCount} pending</div>
-      <div class="categories">
-        ${categories
-          .map(
-            (category) => `
-            <button class="category-tile${
-              category === selectedCategory ? " active" : ""
-            }" data-category="${category}">
-              ${category}
-            </button>
-          `
-          )
-          .join("")}
+      <div class="task-list">
+        ${DEFAULT_CATEGORIES.map((category) => {
+          const tasksInCategory = childGoals.filter((g) => g.category === category);
+          return `
+            <div class="category-section">
+              <div class="category-header">
+                <h3>${category}</h3>
+                <button class="add-task-btn" data-category="${category}" title="Add task to ${category}">+</button>
+              </div>
+              <div class="tasks-in-category">
+                ${
+                  tasksInCategory.length
+                    ? tasksInCategory
+                        .map(
+                          (task) => `
+                      <div class="task-item" data-goal-id="${task.id}">
+                        <span class="task-name">${task.title}</span>
+                        <span class="task-reward">${task.reward_minutes}min</span>
+                      </div>
+                    `
+                        )
+                        .join("")
+                    : `<div class="no-tasks">No tasks</div>`
+                }
+              </div>
+            </div>
+          `;
+        }).join("")}
       </div>
       <div class="actions">
         <button data-action="claim">Claim Task</button>
@@ -198,10 +214,26 @@ const render = () => {
       </div>
     `;
 
-    card.querySelectorAll(".category-tile").forEach((tile) => {
-      tile.addEventListener("click", () => {
-        state.selections.set(child.id, tile.dataset.category);
-        render();
+    // Task list event handlers
+    card.querySelectorAll(".task-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        const goalId = parseInt(item.dataset.goalId, 10);
+        const goal = childGoals.find((g) => g.id === goalId);
+        if (goal) {
+          claimGoal(child, goal);
+        }
+      });
+    });
+
+    // Add task button handlers
+    card.querySelectorAll(".add-task-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const category = button.dataset.category;
+        if (state.parent.unlocked) {
+          openAddTaskModal(child, category);
+        } else {
+          alert("Parent unlock required to add tasks.");
+        }
       });
     });
 
@@ -221,6 +253,16 @@ const render = () => {
 
     dashboard.appendChild(card);
   });
+};
+
+const claimGoal = async (child, goal) => {
+  try {
+    await postJson(`/child/${child.id}/claim`, { goal_id: goal.id });
+    await loadState();
+  } catch (error) {
+    alert("Failed to claim task. Please try again.");
+    console.error(error);
+  }
 };
 
 const openClaimModal = (child) => {
@@ -329,6 +371,75 @@ const openClaimModal = (child) => {
             console.error(error);
           }
         });
+      });
+    },
+  });
+};
+
+const openAddTaskModal = (child, category) => {
+  showModal({
+    title: `Add Task to ${child.name} - ${category}`,
+    body: `
+      <div class="form-grid">
+        <label>
+          Task Title *
+          <input type="text" id="add-title" placeholder="e.g., Math homework" />
+        </label>
+        <label>
+          Reward (minutes) *
+          <input type="number" id="add-minutes" min="1" placeholder="15" />
+        </label>
+        <label>
+          Repeat Rule
+          <select id="add-repeat">
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="once">Once</option>
+          </select>
+        </label>
+        <label>
+          <input type="checkbox" id="add-proof" />
+          Requires Photo Proof
+        </label>
+        <label>
+          <input type="checkbox" id="add-auto-approve" />
+          Auto-Approve
+        </label>
+      </div>
+    `,
+    footer: `
+      <button class="primary" data-action="save">Add Task</button>
+      <button data-action="close">Cancel</button>
+    `,
+    onMount: () => {
+      modalRoot.querySelector("[data-action='save']").addEventListener("click", async () => {
+        const title = modalRoot.querySelector("#add-title").value;
+        const reward_minutes = Number(modalRoot.querySelector("#add-minutes").value);
+        const repeat_rule = modalRoot.querySelector("#add-repeat").value;
+        const proof_required = modalRoot.querySelector("#add-proof").checked;
+        const auto_approve = modalRoot.querySelector("#add-auto-approve").checked;
+
+        if (!title || !reward_minutes || reward_minutes <= 0) {
+          alert("Please fill in all required fields.");
+          return;
+        }
+
+        try {
+          await postJson(`/parent/goals?pin=${encodeURIComponent(state.parent.pin)}`, {
+            child_id: child.id,
+            category,
+            title,
+            reward_minutes,
+            repeat_rule,
+            proof_required,
+            auto_approve,
+          });
+          await loadState();
+          closeModal();
+        } catch (error) {
+          alert("Failed to add task.");
+          console.error(error);
+        }
       });
     },
   });
