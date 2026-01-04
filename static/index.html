@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Rewards Kiosk</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <div class="header-left">
+        <h1>Home Rewards Kiosk</h1>
+        <div id="date" class="date"></div>
+      </div>
+      <div class="header-right">
+        <button id="parentButton" class="parent-button">Parent 🔒</button>
+      </div>
+    </header>
+    <main class="board" id="board"></main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <div id="parentPanel" class="parent-panel hidden">
+    <div class="parent-panel-header">
+      <div class="tabs">
+        <button data-tab="approvals" class="tab-button active">Approvals</button>
+        <button data-tab="today" class="tab-button">Today</button>
+        <button data-tab="templates" class="tab-button">Templates</button>
+        <button data-tab="settings" class="tab-button">Settings</button>
+      </div>
+      <button id="closeParent" class="close-button">Close</button>
+    </div>
+    <div class="parent-panel-body">
+      <section id="tab-approvals" class="tab-section"></section>
+      <section id="tab-today" class="tab-section hidden"></section>
+      <section id="tab-templates" class="tab-section hidden"></section>
+      <section id="tab-settings" class="tab-section hidden"></section>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
