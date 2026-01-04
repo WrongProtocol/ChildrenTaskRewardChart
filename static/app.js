@@ -425,12 +425,6 @@ async function handleReject(taskId) {
  * Fetches list from /api/parent/completed endpoint
  */
 async function loadCompletedTasks() {
-/**
- * Load and display completed (approved) tasks for parent management
- * Allows parent to view and revoke (unchecked) completed tasks
- * Fetches list from /api/parent/completed endpoint
- */
-async function loadCompletedTasks() {
   const section = document.getElementById("tab-completed");
   section.innerHTML = "";
   
@@ -607,12 +601,6 @@ function buildTodayForm() {
  * Shows tasks for each child organized by category
  * Allows parent to create, edit, and delete today's tasks
  */
-
-/**
- * Load and display today's tasks for the current day
- * Shows tasks for each child organized by category
- * Allows parent to create, edit, and delete today's tasks
- */
 async function loadTodayTasks() {
   const section = document.getElementById("tab-today");
   section.innerHTML = "";
@@ -720,6 +708,7 @@ function findTaskById(taskId) {
  * Allows parent to configure which tasks appear by default for each day type
  * Fetches templates from /api/parent/templates endpoint
  */
+async function loadTemplates() {
   const section = document.getElementById("tab-templates");
   section.innerHTML = "";
 
@@ -852,11 +841,6 @@ function findTaskById(taskId) {
 // SETTINGS - DAILY REWARD TEXT & PIN MANAGEMENT
 // ============================================
 
-/**
- * Load and display settings form for parent configuration
- * Allows changing daily reward text and updating parent PIN
- * Fetches current settings from /api/parent/settings endpoint
- */
 /**
  * Load and display settings form for parent configuration
  * Allows changing daily reward text and updating parent PIN
