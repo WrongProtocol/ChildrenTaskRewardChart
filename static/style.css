@@ -391,6 +391,99 @@ html, body {
   cursor: pointer;
 }
 
+.child-management {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.child-management-header h3 {
+  margin: 0;
+}
+
+.child-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.child-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f172a;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #374151;
+}
+
+.child-row input {
+  flex: 1;
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid #374151;
+  background: #111827;
+  color: #f9fafb;
+  font-size: 12px;
+}
+
+.child-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.child-actions button,
+.child-add button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.child-actions .secondary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.child-actions .danger {
+  background: #ef4444;
+  color: #fff;
+}
+
+.child-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.child-add input {
+  flex: 1;
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid #374151;
+  background: #111827;
+  color: #f9fafb;
+  font-size: 12px;
+}
+
+.child-add button {
+  background: #22c55e;
+  color: #0f172a;
+}
+
+.child-add button:disabled,
+.child-add input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.child-limit {
+  font-size: 12px;
+  color: #fbbf24;
+}
+
 .close-button {
   padding: 6px 12px;
   background: #ef4444;

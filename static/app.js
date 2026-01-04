@@ -902,17 +902,156 @@ async function loadSettings() {
     };
     
     // Send settings update via PUT request
-    await fetchWithAuth("/api/parent/settings", {
+    const saveResponse = await fetchWithAuth("/api/parent/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    
+
+    if (!saveResponse.ok) {
+      showToast("Unable to save settings");
+      return;
+    }
+
     // Show success message to user
     showToast("Settings saved");
   });
   
   section.appendChild(form);
+
+  const maxChildren = 5;
+  const children = appState?.children || [];
+  const childManager = document.createElement("div");
+  childManager.className = "child-management";
+
+  const childHeader = document.createElement("div");
+  childHeader.className = "child-management-header";
+  const childTitle = document.createElement("h3");
+  childTitle.textContent = "Manage Children";
+  childHeader.appendChild(childTitle);
+  childManager.appendChild(childHeader);
+
+  const childList = document.createElement("div");
+  childList.className = "child-list";
+
+  children.forEach((child) => {
+    const row = document.createElement("div");
+    row.className = "child-row";
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = child.name;
+    input.setAttribute("aria-label", `Child name for ${child.name}`);
+
+    const actions = document.createElement("div");
+    actions.className = "child-actions";
+
+    const saveButton = document.createElement("button");
+    saveButton.type = "button";
+    saveButton.className = "secondary";
+    saveButton.textContent = "Save";
+    saveButton.addEventListener("click", async () => {
+      const name = input.value.trim();
+      if (!name) {
+        showToast("Child name is required");
+        return;
+      }
+      const response = await fetchWithAuth(`/api/parent/children/${child.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!response.ok) {
+        showToast("Unable to update child");
+        return;
+      }
+      await loadState();
+      loadSettings();
+    });
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "danger";
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", async () => {
+      const response = await fetchWithAuth(`/api/parent/children/${child.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        showToast("Unable to delete child");
+        return;
+      }
+      await loadState();
+      loadSettings();
+    });
+
+    actions.appendChild(saveButton);
+    actions.appendChild(deleteButton);
+    row.appendChild(input);
+    row.appendChild(actions);
+    childList.appendChild(row);
+  });
+
+  childManager.appendChild(childList);
+
+  const addRow = document.createElement("div");
+  addRow.className = "child-add";
+  const addInput = document.createElement("input");
+  addInput.type = "text";
+  addInput.placeholder = "New child name";
+
+  const addButton = document.createElement("button");
+  addButton.type = "button";
+  addButton.textContent = "Add Child";
+
+  const limitNote = document.createElement("div");
+  limitNote.className = "child-limit";
+
+  if (children.length >= maxChildren) {
+    addInput.disabled = true;
+    addButton.disabled = true;
+    limitNote.textContent = "Maximum of 5 children reached.";
+  } else {
+    limitNote.textContent = "You can add up to 5 children.";
+  }
+
+  const submitNewChild = async () => {
+    const name = addInput.value.trim();
+    if (!name) {
+      showToast("Enter a child name");
+      return;
+    }
+    if (children.length >= maxChildren) {
+      showToast("Child limit reached (max 5)");
+      return;
+    }
+    const response = await fetchWithAuth("/api/parent/children", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (!response.ok) {
+      showToast("Unable to add child");
+      return;
+    }
+    addInput.value = "";
+    await loadState();
+    loadSettings();
+  };
+
+  addButton.addEventListener("click", submitNewChild);
+  addInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submitNewChild();
+    }
+  });
+
+  addRow.appendChild(addInput);
+  addRow.appendChild(addButton);
+  childManager.appendChild(addRow);
+  childManager.appendChild(limitNote);
+  section.appendChild(childManager);
 }
 
 // ============================================
