@@ -698,7 +698,8 @@ def build_state(session: Session) -> Dict:
                     required_approved += 1
 
         total_count = len(child_tasks)
-        percent_complete = int((approved_count / total_count) * 100) if total_count else 0
+        # Calculate percent_complete based only on REQUIRED tasks
+        percent_complete = int((required_approved / required_total) * 100) if required_total else 0
         unlocked = required_total == required_approved
         pending_count = len([t for t in child_tasks if t.state == "PENDING"])
         child_states.append(
