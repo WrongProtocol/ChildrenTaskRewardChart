@@ -392,11 +392,11 @@ async function loadTodayTasks() {
   if (selectedTodayTask) {
     const task = findTaskById(selectedTodayTask);
     if (task) {
-      form.querySelector(\"input[name='title']\").value = task.title;
-      form.querySelector(\"select[name='category']\").value = task.category;
-      form.querySelector(\"select[name='required']\").value = task.required ? \"true\" : \"false\";
-      form.querySelector(\"input[name='reward_text']\").value = task.reward_text || \"\";
-      form.querySelector(\"input[name='sort_order']\").value = task.sort_order || 1;
+      form.querySelector("input[name='title']").value = task.title;
+      form.querySelector("select[name='category']").value = task.category;
+      form.querySelector("select[name='required']").value = task.required ? "true" : "false";
+      form.querySelector("input[name='reward_text']").value = task.reward_text || "";
+      form.querySelector("input[name='sort_order']").value = task.sort_order || 1;
     }
   }
 }
