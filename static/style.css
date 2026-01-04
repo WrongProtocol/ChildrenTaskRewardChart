@@ -202,10 +202,6 @@ html, body {
   font-size: 14px;
 }
 
-.hidden {
-  display: none;
-}
-
 .parent-panel {
   position: fixed;
   top: 0;
@@ -342,4 +338,8 @@ html, body {
   border: none;
   border-radius: 6px;
   cursor: pointer;
+}
+
+.hidden {
+  display: none !important;
 }
