@@ -65,10 +65,6 @@ async function loadState() {
       return;
     }
     appState = await response.json();
-    console.log("Loaded appState:", appState);
-    if (appState.children && appState.children.length > 0) {
-      console.log("First child from appState:", appState.children[0]);
-    }
     renderState();
   } catch (error) {
     board.innerHTML = "<div class=\"empty-message\">Unable to load tasks. Check the server connection.</div>";
@@ -913,10 +909,6 @@ async function loadSettings() {
   const maxChildren = 5;
   // Get fresh children data from appState (which should be updated from /api/state)
   const children = appState?.children || [];
-  console.log("Children data in loadSettings:", children);
-  if (children.length > 0) {
-    console.log("First child color:", children[0].color, "Type:", typeof children[0].color);
-  }
   const childManager = document.createElement("div");
   childManager.className = "child-management";
 
@@ -941,8 +933,6 @@ async function loadSettings() {
 
     const colorInput = document.createElement("input");
     colorInput.type = "color";
-    // Log the color value for debugging
-    console.log(`Child ${child.id} (${child.name}) color from DB:`, child.color, "Type:", typeof child.color);
     // Ensure we have a valid hex color value (color input requires valid hex)
     let colorValue = "#000000"; // Default to black
     if (child.color && typeof child.color === "string") {
@@ -954,7 +944,6 @@ async function loadSettings() {
       }
     }
     colorInput.value = colorValue;
-    console.log(`Setting color picker to: ${colorValue}`);
     colorInput.setAttribute("aria-label", `Color for ${child.name}`);
     colorInput.className = "color-picker";
 
@@ -972,13 +961,11 @@ async function loadSettings() {
         return;
       }
       const payload = { name, color: colorInput.value };
-      console.log("Saving child with payload:", payload);
       const response = await fetchWithAuth(`/api/parent/children/${child.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      console.log("Save response status:", response.status);
       if (!response.ok) {
         showToast("Unable to update child");
         return;
