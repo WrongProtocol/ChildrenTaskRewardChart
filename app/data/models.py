@@ -1,7 +1,9 @@
 """
 SQLAlchemy ORM models defining the database schema.
-Four main tables: children, task templates, daily tasks, and settings.
+Core tables: children, task templates, daily tasks, reward bank entries, and settings.
 """
+import datetime
+
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
@@ -18,6 +20,7 @@ class Child(Base):
         display_order: Order in which child appears on the main display
         color: Hex color code for the child's name display (e.g., #FF5733)
         tasks: Relationship to their daily task instances
+        reward_entries: Relationship to their reward bank entries
     """
     __tablename__ = "children"
 
@@ -27,6 +30,7 @@ class Child(Base):
     color = Column(String, nullable=True, default=None)  # Hex color code (e.g., #FF5733)
 
     tasks = relationship("DailyTaskInstance", back_populates="child")
+    reward_entries = relationship("RewardBankEntry", back_populates="child")
 
 
 class TaskTemplateItem(Base):
@@ -91,6 +95,35 @@ class DailyTaskInstance(Base):
     approved_at = Column(DateTime, nullable=True)
 
     child = relationship("Child", back_populates="tasks")
+
+
+class RewardBankEntry(Base):
+    """
+    Reward bank entry for a child.
+
+    Attributes:
+        id: Unique identifier
+        child_id: Foreign key to child
+        reward_text: Reward description (e.g., "+20 min play", "$2")
+        source_task_id: Optional daily task that generated the reward
+        state: AVAILABLE, PENDING, or CLAIMED
+        created_at: Timestamp when reward was added
+        requested_at: Timestamp when child requested to claim reward
+        approved_at: Timestamp when parent approved the claim
+        child: Relationship to the child who owns this reward
+    """
+    __tablename__ = "reward_bank_entries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    child_id = Column(Integer, ForeignKey("children.id"), nullable=False)
+    reward_text = Column(String, nullable=False)
+    source_task_id = Column(Integer, ForeignKey("daily_task_instances.id"), nullable=True)
+    state = Column(String, nullable=False, default="AVAILABLE")
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    requested_at = Column(DateTime, nullable=True)
+    approved_at = Column(DateTime, nullable=True)
+
+    child = relationship("Child", back_populates="reward_entries")
 
 
 class Settings(Base):

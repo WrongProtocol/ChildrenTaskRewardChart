@@ -49,3 +49,40 @@ def unclaim_task(child_id: int, task_id: int, db: Session = Depends(get_db)):
     if error:
         raise HTTPException(status_code=400, detail=error)
     return {"status": "ok"}
+
+
+@router.get("/api/child/{child_id}/rewards")
+def list_rewards(child_id: int, db: Session = Depends(get_db)):
+    """
+    Get a child's reward bank entries.
+
+    Args:
+        child_id: ID of the child
+        db: Database session (auto-injected)
+
+    Returns:
+        List of reward bank entries
+    """
+    rewards, error = services.list_reward_bank(db, child_id)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"rewards": rewards}
+
+
+@router.post("/api/child/{child_id}/rewards/{reward_id}/request")
+def request_reward(child_id: int, reward_id: int, db: Session = Depends(get_db)):
+    """
+    Child requests to claim a reward from their reward bank.
+
+    Args:
+        child_id: ID of the child
+        reward_id: ID of the reward to claim
+        db: Database session (auto-injected)
+
+    Returns:
+        Status confirmation if successful
+    """
+    error = services.request_reward_claim(db, child_id, reward_id)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"status": "ok"}

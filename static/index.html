@@ -38,6 +38,7 @@
     <div class="parent-panel-header">
       <div class="tabs">
         <button data-tab="approvals" class="tab-button active">Approvals</button>
+        <button data-tab="rewards" class="tab-button">Rewards</button>
         <button data-tab="today" class="tab-button">Today</button>
         <button data-tab="completed" class="tab-button">Completed</button>
         <button data-tab="templates" class="tab-button">Templates</button>
@@ -47,10 +48,21 @@
     </div>
     <div class="parent-panel-body">
       <section id="tab-approvals" class="tab-section"></section>
+      <section id="tab-rewards" class="tab-section hidden"></section>
       <section id="tab-today" class="tab-section hidden"></section>
       <section id="tab-completed" class="tab-section hidden"></section>
       <section id="tab-templates" class="tab-section hidden"></section>
       <section id="tab-settings" class="tab-section hidden"></section>
+    </div>
+  </div>
+
+  <div id="rewardModal" class="reward-modal hidden">
+    <div class="reward-card">
+      <div class="reward-header">
+        <h2 id="rewardTitle">Reward Bank</h2>
+        <button id="rewardClose" class="secondary">Close</button>
+      </div>
+      <div id="rewardList" class="reward-list"></div>
     </div>
   </div>
 

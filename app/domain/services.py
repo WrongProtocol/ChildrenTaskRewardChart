@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Tuple
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.data.models import Child, DailyTaskInstance, Settings, TaskTemplateItem
+from app.data.models import Child, DailyTaskInstance, RewardBankEntry, Settings, TaskTemplateItem
 from app.security.pin import hash_pin
 from app.domain.seed import seed_data
 
@@ -220,6 +220,7 @@ def delete_child(session: Session, child_id: int) -> Optional[str]:
         return "At least one child must remain"
 
     session.execute(delete(DailyTaskInstance).where(DailyTaskInstance.child_id == child_id))
+    session.execute(delete(RewardBankEntry).where(RewardBankEntry.child_id == child_id))
     session.execute(delete(TaskTemplateItem).where(TaskTemplateItem.child_id == child_id))
     session.delete(child)
 
@@ -304,6 +305,23 @@ def approve_task(session: Session, task_id: int) -> Optional[str]:
     if not task.claimed_at:
         task.claimed_at = datetime.datetime.utcnow()
     task.approved_at = datetime.datetime.utcnow()
+    if not task.required and task.reward_text:
+        existing_reward = (
+            session.execute(
+                select(RewardBankEntry).where(RewardBankEntry.source_task_id == task.id)
+            )
+            .scalar_one_or_none()
+        )
+        if not existing_reward:
+            session.add(
+                RewardBankEntry(
+                    child_id=task.child_id,
+                    reward_text=task.reward_text,
+                    source_task_id=task.id,
+                    state="AVAILABLE",
+                    created_at=datetime.datetime.utcnow(),
+                )
+            )
     session.commit()
     return None
 
@@ -348,6 +366,99 @@ def revoke_task(session: Session, task_id: int) -> Optional[str]:
     task.state = "OPEN"
     task.claimed_at = None
     task.approved_at = None
+    if not task.required and task.reward_text:
+        session.execute(
+            delete(RewardBankEntry).where(
+                RewardBankEntry.source_task_id == task.id,
+                RewardBankEntry.state != "CLAIMED",
+            )
+        )
+    session.commit()
+    return None
+
+
+def list_reward_bank(session: Session, child_id: int) -> Tuple[Optional[List[Dict]], Optional[str]]:
+    child = session.get(Child, child_id)
+    if not child:
+        return None, "Child not found"
+    rewards = (
+        session.execute(
+            select(RewardBankEntry)
+            .where(RewardBankEntry.child_id == child_id)
+            .order_by(RewardBankEntry.created_at.desc(), RewardBankEntry.id.desc())
+        )
+        .scalars()
+        .all()
+    )
+    return [
+        {
+            "id": reward.id,
+            "reward_text": reward.reward_text,
+            "state": reward.state,
+            "created_at": reward.created_at.isoformat(),
+            "requested_at": reward.requested_at.isoformat() if reward.requested_at else None,
+            "approved_at": reward.approved_at.isoformat() if reward.approved_at else None,
+        }
+        for reward in rewards
+    ], None
+
+
+def request_reward_claim(session: Session, child_id: int, reward_id: int) -> Optional[str]:
+    reward = session.get(RewardBankEntry, reward_id)
+    if not reward or reward.child_id != child_id:
+        return "Reward not found"
+    if reward.state != "AVAILABLE":
+        return "Reward is not available"
+    reward.state = "PENDING"
+    reward.requested_at = datetime.datetime.utcnow()
+    reward.approved_at = None
+    session.commit()
+    return None
+
+
+def list_reward_requests(session: Session) -> List[Dict]:
+    pending_rewards = (
+        session.execute(
+            select(RewardBankEntry, Child)
+            .join(Child, RewardBankEntry.child_id == Child.id)
+            .where(RewardBankEntry.state == "PENDING")
+            .order_by(RewardBankEntry.requested_at.desc(), RewardBankEntry.id.desc())
+        )
+        .all()
+    )
+    return [
+        {
+            "id": reward.id,
+            "child_id": child.id,
+            "child_name": child.name,
+            "reward_text": reward.reward_text,
+            "requested_at": reward.requested_at.isoformat() if reward.requested_at else None,
+        }
+        for reward, child in pending_rewards
+    ]
+
+
+def approve_reward_claim(session: Session, reward_id: int) -> Optional[str]:
+    reward = session.get(RewardBankEntry, reward_id)
+    if not reward:
+        return "Reward not found"
+    if reward.state != "PENDING":
+        return "Reward is not pending"
+    reward.state = "CLAIMED"
+    reward.approved_at = datetime.datetime.utcnow()
+    session.commit()
+    return None
+
+
+def deny_reward_claim(session: Session, reward_id: int) -> Optional[str]:
+    reward = session.get(RewardBankEntry, reward_id)
+    if not reward:
+        return "Reward not found"
+    if reward.state != "PENDING":
+        return "Reward is not pending"
+    reward.state = "AVAILABLE"
+    reward.requested_at = None
+    reward.approved_at = None
     session.commit()
     return None
 
@@ -749,6 +860,5 @@ def build_state(session: Session) -> Dict:
         "children": child_states,
         "daily_reward_text": settings.daily_reward_text,
     }
-
 
 

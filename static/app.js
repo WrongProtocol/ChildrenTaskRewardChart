@@ -25,6 +25,9 @@ let selectedTodayTask = null;
 /** @type {Number|null} ID of template task being edited, if any */
 let selectedTemplateTask = null;
 
+/** @type {Object|null} Child currently viewing reward bank */
+let activeRewardChild = null;
+
 /** Map of task category keys to display labels */
 const CATEGORY_LABELS = {
   SCHOOLWORK: "Schoolwork",
@@ -100,13 +103,24 @@ function renderState() {
     const header = document.createElement("div");
     header.className = "child-header";
 
+    const headerRow = document.createElement("div");
+    headerRow.className = "child-header-row";
+
     const name = document.createElement("div");
     name.className = "child-name";
     name.textContent = child.name;
     if (child.color) {
       name.style.color = child.color;
     }
-    header.appendChild(name);
+    headerRow.appendChild(name);
+
+    const rewardButton = document.createElement("button");
+    rewardButton.className = "reward-button";
+    rewardButton.textContent = "Reward Bank";
+    rewardButton.addEventListener("click", () => openRewardBank(child));
+    headerRow.appendChild(rewardButton);
+
+    header.appendChild(headerRow);
 
     // Progress bar showing % of tasks approved
     const progressRow = document.createElement("div");
@@ -197,6 +211,91 @@ function renderState() {
 
     board.appendChild(card);
   });
+}
+
+// ============================================
+// REWARD BANK (Child view)
+// ============================================
+
+/**
+ * Open reward bank modal for selected child
+ * @param {object} child - Child object
+ */
+async function openRewardBank(child) {
+  activeRewardChild = child;
+  document.getElementById("rewardTitle").textContent = `${child.name}'s Reward Bank`;
+  document.getElementById("rewardModal").classList.remove("hidden");
+  await loadRewardBank(child.id);
+}
+
+/**
+ * Close reward bank modal
+ */
+function closeRewardBank() {
+  document.getElementById("rewardModal").classList.add("hidden");
+  activeRewardChild = null;
+}
+
+/**
+ * Fetch and render reward bank entries for a child
+ * @param {number} childId - ID of child to fetch rewards for
+ */
+async function loadRewardBank(childId) {
+  const list = document.getElementById("rewardList");
+  list.innerHTML = "";
+  const response = await fetch(`/api/child/${childId}/rewards`);
+  if (!response.ok) {
+    list.textContent = "Unable to load rewards.";
+    return;
+  }
+  const data = await response.json();
+  const rewards = data.rewards;
+  if (rewards.length === 0) {
+    list.textContent = "No rewards yet. Complete bonus tasks to add rewards here.";
+    return;
+  }
+  rewards.forEach((reward) => {
+    const row = document.createElement("div");
+    row.className = `reward-item ${reward.state.toLowerCase()}`;
+
+    const text = document.createElement("div");
+    text.className = "reward-text";
+    text.textContent = reward.reward_text;
+    row.appendChild(text);
+
+    const status = document.createElement("div");
+    status.className = "reward-status";
+    if (reward.state === "AVAILABLE") {
+      const requestButton = document.createElement("button");
+      requestButton.textContent = "Request";
+      requestButton.addEventListener("click", () => requestRewardClaim(childId, reward.id));
+      status.appendChild(requestButton);
+    } else if (reward.state === "PENDING") {
+      status.textContent = "Pending approval";
+    } else {
+      const check = document.createElement("span");
+      check.className = "claimed-check";
+      check.textContent = "✓ Claimed";
+      status.appendChild(check);
+    }
+
+    row.appendChild(status);
+    list.appendChild(row);
+  });
+}
+
+/**
+ * Request to claim a reward in the reward bank
+ * @param {number} childId - ID of child requesting reward
+ * @param {number} rewardId - ID of reward to request
+ */
+async function requestRewardClaim(childId, rewardId) {
+  const response = await fetch(`/api/child/${childId}/rewards/${rewardId}/request`, { method: "POST" });
+  if (!response.ok) {
+    showToast("Unable to request reward");
+    return;
+  }
+  await loadRewardBank(childId);
 }
 
 // ============================================
@@ -291,6 +390,7 @@ async function submitPin() {
 function showParentPanel() {
   document.getElementById("parentPanel").classList.remove("hidden");
   loadApprovals();
+  loadRewardRequests();
   loadTodayTasks();
   loadCompletedTasks();
   loadTemplates();
@@ -502,6 +602,100 @@ async function loadCompletedTasks() {
   });
 
   section.appendChild(grid);
+}
+
+/**
+ * Load and display pending reward claim requests for parent review
+ * Fetches list from /api/parent/rewards/pending endpoint
+ */
+async function loadRewardRequests() {
+  const section = document.getElementById("tab-rewards");
+  section.innerHTML = "";
+  const response = await fetchWithAuth("/api/parent/rewards/pending");
+  if (!response.ok) {
+    section.textContent = "Unable to load reward requests.";
+    return;
+  }
+  const data = await response.json();
+  const pending = data.pending;
+  if (pending.length === 0) {
+    section.textContent = "No reward requests.";
+    return;
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "panel-grid";
+
+  const grouped = {};
+  pending.forEach((reward) => {
+    grouped[reward.child_name] = grouped[reward.child_name] || [];
+    grouped[reward.child_name].push(reward);
+  });
+
+  Object.entries(grouped).forEach(([childName, rewards]) => {
+    const card = document.createElement("div");
+    card.className = "panel-card";
+
+    const title = document.createElement("h3");
+    title.textContent = childName;
+    card.appendChild(title);
+
+    rewards.forEach((reward) => {
+      const row = document.createElement("div");
+      row.className = "panel-task";
+
+      const label = document.createElement("span");
+      label.textContent = reward.reward_text;
+
+      const actions = document.createElement("div");
+      actions.className = "action-buttons";
+
+      const approve = document.createElement("button");
+      approve.className = "approve";
+      approve.textContent = "Approve";
+      approve.addEventListener("click", () => handleRewardApprove(reward.id));
+
+      const deny = document.createElement("button");
+      deny.className = "reject";
+      deny.textContent = "Deny";
+      deny.addEventListener("click", () => handleRewardDeny(reward.id));
+
+      actions.appendChild(approve);
+      actions.appendChild(deny);
+      row.appendChild(label);
+      row.appendChild(actions);
+      card.appendChild(row);
+    });
+    grid.appendChild(card);
+  });
+
+  section.appendChild(grid);
+}
+
+/**
+ * Approve a reward claim request by sending POST request to backend
+ * @param {number} rewardId - ID of the reward to approve
+ */
+async function handleRewardApprove(rewardId) {
+  await fetchWithAuth(`/api/parent/rewards/${rewardId}/approve`, { method: "POST" });
+  await loadState();
+  loadRewardRequests();
+  if (activeRewardChild) {
+    loadRewardBank(activeRewardChild.id);
+  }
+}
+
+/**
+ * Deny a reward claim request by sending POST request to backend
+ * @param {number} rewardId - ID of the reward to deny
+ */
+async function handleRewardDeny(rewardId) {
+  await fetchWithAuth(`/api/parent/rewards/${rewardId}/deny`, { method: "POST" });
+  await loadState();
+  loadRewardRequests();
+  if (activeRewardChild) {
+    loadRewardBank(activeRewardChild.id);
+  }
 }
 
 /**
@@ -1111,6 +1305,9 @@ function setupListeners() {
   
   // Submit PIN button
   document.getElementById("pinSubmit").addEventListener("click", submitPin);
+
+  // Close reward bank modal
+  document.getElementById("rewardClose").addEventListener("click", closeRewardBank);
   
   // Allow Enter key to submit PIN (UX improvement)
   document.getElementById("pinInput").addEventListener("keydown", (event) => {

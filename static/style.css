@@ -77,8 +77,26 @@ html, body {
   gap: 6px;
 }
 
+.child-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .child-name {
   font-size: 20px;
+  font-weight: 600;
+}
+
+.reward-button {
+  background: #ecfeff;
+  color: #0e7490;
+  border: 1px solid #67e8f9;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
   font-weight: 600;
 }
 
@@ -255,6 +273,15 @@ html, body {
 .pin-actions .secondary {
   background: #e2e8f0;
   color: #0f172a;
+}
+
+.secondary {
+  background: #e2e8f0;
+  color: #0f172a;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
 }
 
 .parent-panel {
@@ -501,4 +528,89 @@ html, body {
 
 .hidden {
   display: none !important;
+}
+
+.reward-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.75);
+  z-index: 30;
+}
+
+.reward-card {
+  background: #ffffff;
+  color: #0f172a;
+  padding: 20px;
+  border-radius: 12px;
+  width: min(520px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.3);
+}
+
+.reward-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.reward-header h2 {
+  margin: 0;
+}
+
+.reward-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reward-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  font-size: 14px;
+}
+
+.reward-item.claimed .reward-text {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.reward-item.pending {
+  background: #fef3c7;
+  border-color: #fcd34d;
+}
+
+.reward-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.reward-status button {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.reward-status .claimed-check {
+  color: #16a34a;
+  font-size: 14px;
 }

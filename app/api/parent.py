@@ -179,6 +179,30 @@ def list_completed(db: Session = Depends(get_db), _: None = Depends(require_toke
     return {"completed": services.list_completed_tasks(db)}
 
 
+@router.get("/api/parent/rewards/pending")
+def list_reward_requests(db: Session = Depends(get_db), _: None = Depends(require_token)):
+    """Get all pending reward claim requests across children."""
+    return {"pending": services.list_reward_requests(db)}
+
+
+@router.post("/api/parent/rewards/{reward_id}/approve")
+def approve_reward(reward_id: int, db: Session = Depends(get_db), _: None = Depends(require_token)):
+    """Approve a child's reward claim request."""
+    error = services.approve_reward_claim(db, reward_id)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"status": "ok"}
+
+
+@router.post("/api/parent/rewards/{reward_id}/deny")
+def deny_reward(reward_id: int, db: Session = Depends(get_db), _: None = Depends(require_token)):
+    """Deny a child's reward claim request, returning it to available."""
+    error = services.deny_reward_claim(db, reward_id)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"status": "ok"}
+
+
 # ============================================
 # TODAY'S TASKS ENDPOINTS (One-time tasks for today)
 # ============================================
