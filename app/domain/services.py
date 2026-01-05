@@ -313,10 +313,11 @@ def approve_task(session: Session, task_id: int) -> Optional[str]:
             .scalar_one_or_none()
         )
         if not existing_reward:
+            composed_text = f"{task.title}: {task.reward_text}"
             session.add(
                 RewardBankEntry(
                     child_id=task.child_id,
-                    reward_text=task.reward_text,
+                    reward_text=composed_text,
                     source_task_id=task.id,
                     state="AVAILABLE",
                     created_at=datetime.datetime.utcnow(),
@@ -390,10 +391,29 @@ def list_reward_bank(session: Session, child_id: int) -> Tuple[Optional[List[Dic
         .scalars()
         .all()
     )
+
+    # Backfill task title for older rewards (created before composed text change)
+    task_ids = [r.source_task_id for r in rewards if r.source_task_id]
+    title_by_id: Dict[int, str] = {}
+    if task_ids:
+        tasks = (
+            session.execute(select(DailyTaskInstance).where(DailyTaskInstance.id.in_(task_ids)))
+            .scalars()
+            .all()
+        )
+        title_by_id = {t.id: t.title for t in tasks}
+
+    def compose_text(reward: RewardBankEntry) -> str:
+        if ":" in reward.reward_text:
+            return reward.reward_text
+        if reward.source_task_id and reward.source_task_id in title_by_id:
+            return f"{title_by_id[reward.source_task_id]}: {reward.reward_text}"
+        return reward.reward_text
+
     return [
         {
             "id": reward.id,
-            "reward_text": reward.reward_text,
+            "reward_text": compose_text(reward),
             "state": reward.state,
             "created_at": reward.created_at.isoformat(),
             "requested_at": reward.requested_at.isoformat() if reward.requested_at else None,
@@ -426,12 +446,31 @@ def list_reward_requests(session: Session) -> List[Dict]:
         )
         .all()
     )
+
+    # Gather source task titles to compose display text
+    task_ids = [r.source_task_id for r, _ in pending_rewards if r.source_task_id]
+    title_by_id: Dict[int, str] = {}
+    if task_ids:
+        tasks = (
+            session.execute(select(DailyTaskInstance).where(DailyTaskInstance.id.in_(task_ids)))
+            .scalars()
+            .all()
+        )
+        title_by_id = {t.id: t.title for t in tasks}
+
+    def compose_text(reward: RewardBankEntry) -> str:
+        if ":" in reward.reward_text:
+            return reward.reward_text
+        if reward.source_task_id and reward.source_task_id in title_by_id:
+            return f"{title_by_id[reward.source_task_id]}: {reward.reward_text}"
+        return reward.reward_text
+
     return [
         {
             "id": reward.id,
             "child_id": child.id,
             "child_name": child.name,
-            "reward_text": reward.reward_text,
+            "reward_text": compose_text(reward),
             "requested_at": reward.requested_at.isoformat() if reward.requested_at else None,
         }
         for reward, child in pending_rewards
