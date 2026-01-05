@@ -123,6 +123,37 @@ def list_children(session: Session) -> List[Dict]:
 
 
 def create_child(session: Session, data: Dict) -> Tuple[Optional[Dict], Optional[str]]:
+    """
+    Create a new Child and initialize today's task instances from the appropriate template.
+
+    This function:
+    - Ensures today's state is initialized for task generation.
+    - Enforces the maximum number of children (MAX_CHILDREN).
+    - Resolves and validates the requested display_order (defaults to append) and shifts existing
+        children at or after that index to make room.
+    - Persists the new Child and assigns its database-generated id.
+    - Determines whether today is WEEKDAY or WEEKEND, loads matching TaskTemplateItem entries,
+        and creates OPEN DailyTaskInstance rows for the new child. Template items with a child_id
+        are applied only if they target the new child's id.
+
+    Args:
+            session (Session): SQLAlchemy session for all database operations and commits.
+            data (Dict): Input payload with:
+                    - name (str): Required child name.
+                    - display_order (int, optional): Desired insertion index in [0, len(children)].
+
+    Returns:
+            Tuple[Optional[Dict], Optional[str]]:
+                    - On success: ({"id": int, "name": str, "display_order": int}, None).
+                    - On validation failure (e.g., max children reached, invalid display_order): (None, error_message).
+
+    Side Effects:
+            - Updates display_order for existing Child rows to maintain ordering.
+            - Inserts a new Child row.
+            - Inserts DailyTaskInstance rows for the current date based on TaskTemplateItem.
+            - Commits the session twice: once after inserting the Child (to obtain its id) and again
+                after creating daily tasks.
+    """
     ensure_today_initialized(session)
     children = session.execute(select(Child).order_by(Child.display_order)).scalars().all()
     if len(children) >= MAX_CHILDREN:
@@ -178,6 +209,34 @@ def create_child(session: Session, data: Dict) -> Tuple[Optional[Dict], Optional
 
 
 def update_child(session: Session, child_id: int, data: Dict) -> Tuple[Optional[Dict], Optional[str]]:
+    """
+    Update an existing Child entity by ID with optional fields and maintain list ordering.
+
+    Args:
+        session (Session): SQLAlchemy session used for database operations.
+        child_id (int): Primary key of the Child to update.
+        data (Dict): Partial update payload. Supported keys:
+            - "name" (str | None): New name; ignored if None.
+            - "display_order" (int | None): Zero-based index in the ordered list of all children.
+              If provided, the child is repositioned and all children are reindexed sequentially.
+              Must be within [0, len(children) - 1]; otherwise returns an error.
+            - "color" (str | None): Hex color in the form "#RRGGBB". An empty string clears the color (sets to None).
+              Invalid formats are ignored (no change).
+
+    Returns:
+        Tuple[Optional[Dict], Optional[str]]:
+            - On success: ({"id", "name", "display_order", "color"}, None).
+            - On failure (e.g., child not found or invalid display_order): (None, error_message).
+
+    Behavior:
+        - If the child does not exist, returns (None, "Child not found").
+        - When "display_order" is valid, removes the target child from the current ordered list,
+          inserts it at the requested index, and updates display_order for all children starting at 0.
+        - For "color", accepts "#RRGGBB" or "" (to clear). Other values are ignored.
+
+    Side Effects:
+        - Commits all changes to the database via session.commit().
+    """
     child = session.get(Child, child_id)
     if not child:
         return None, "Child not found"
