@@ -17,6 +17,9 @@ A local-only, wall-mounted kiosk checklist for children to understand their dail
 - **Sort order**: control display position of tasks within each category.
 - **Completed tasks tab**: view and revoke approvals if needed.
 
+![Installed On Wall](./screenshots/on-wall.jpg)
+![Homescreen screenshot](./screenshots/homescreen.jpg)
+
 ## Run Locally
 
 1. Install dependencies:
@@ -48,6 +51,7 @@ The default Parent PIN is `1234`. To change it:
 3. Open the **Settings** tab and set a new PIN.
 
 > You can also set a secret for tokens with the `KIOSK_SECRET_KEY` environment variable.
+
 
 ## Parent Admin Panel Tabs
 
@@ -85,6 +89,8 @@ Keep task lists short (around 10–12 items per child) to maintain the no-scroll
 - Children can view their reward bank and tap **"Request"** to claim a reward.
 - Parents see pending requests in the **Rewards** tab and can approve or deny.
 - Once approved, the reward shows a **✓ Claimed** checkmark.
+
+![Reward Bank screenshot](./screenshots/rewards.jpg)
 
 ## Sort Order
 
