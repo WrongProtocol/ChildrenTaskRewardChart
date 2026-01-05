@@ -68,7 +68,20 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  border: 2px solid #e5e7eb;
+  border: 1px solid #e5e7eb;
+  transition: box-shadow 200ms ease, border-color 200ms ease;
+}
+
+/* When a child has a chosen color, add a glow around their card */
+.child-card.child-colored {
+  border-color: var(--child-color);
+  box-shadow: 0 0 0 1px var(--child-color), 0 0 18px 4px var(--child-color);
+  /* Subtle gradient from white to the child's color (low alpha) */
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    var(--child-color-alpha, rgba(0, 0, 0, 0)) 100%
+  );
 }
 
 .child-header {

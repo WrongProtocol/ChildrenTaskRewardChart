@@ -98,6 +98,18 @@ function renderState() {
     // Create child card container
     const card = document.createElement("div");
     card.className = "child-card";
+    if (child.color) {
+      card.style.setProperty("--child-color", child.color);
+      // Compute a subtle alpha variant for gradients (e.g., rgba(r,g,b,0.10))
+      const hex = (typeof child.color === "string" ? child.color : "").replace("#", "");
+      if (hex.length === 6) {
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        card.style.setProperty("--child-color-alpha", `rgba(${r}, ${g}, ${b}, 0.18)`);
+      }
+      card.classList.add("child-colored");
+    }
 
     // Create header with name and progress bar
     const header = document.createElement("div");
